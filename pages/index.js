@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import { Box, TextField, Button, Typography, AppBar, Toolbar, IconButton, Paper } from '@mui/material';
+import { Send, Brightness4, Brightness7 } from '@mui/icons-material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
@@ -6,6 +9,12 @@ export default function Chat() {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const chatBoxRef = useRef(null);
+
+  const theme = createTheme({
+    palette: {
+      mode: darkMode ? 'dark' : 'light',
+    },
+  });
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -47,153 +56,101 @@ export default function Chat() {
   }, [messages]);
 
   return (
-    <div className={darkMode ? 'dark' : ''}>
-      <div className="chat-container">
-        <header className="chat-header">
-          <h1>AI Chatbot</h1>
-          <button className="toggle-mode" onClick={() => setDarkMode(!darkMode)}>
-            {darkMode ? 'Light Mode' : 'Dark Mode'}
-          </button>
-        </header>
-        <div className="chat-box" ref={chatBoxRef}>
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`message ${msg.sender}`}
+    <ThemeProvider theme={theme}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100vh',
+          bgcolor: 'background.default',
+          color: 'text.primary',
+        }}
+      >
+        {/* Header */}
+        <AppBar position="static" color="primary">
+          <Toolbar>
+            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+              AI Chatbot
+            </Typography>
+            <IconButton
+              color="inherit"
+              onClick={() => setDarkMode(!darkMode)}
             >
-              <div className="avatar">
-                {msg.sender === 'user' ? '🧑' : '🤖'}
-              </div>
-              <div className="text-content">
-                <p>{msg.text}</p>
-                <span className="timestamp">{msg.time}</span>
-              </div>
-            </div>
+              {darkMode ? <Brightness7 /> : <Brightness4 />}
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+
+        {/* Chat Area */}
+        <Box
+          ref={chatBoxRef}
+          sx={{
+            flex: 1,
+            overflowY: 'auto',
+            p: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+          }}
+        >
+          {messages.map((msg, index) => (
+            <Paper
+              key={index}
+              elevation={3}
+              sx={{
+                p: 2,
+                alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                bgcolor: msg.sender === 'user' ? 'primary.main' : 'grey.200',
+                color: msg.sender === 'user' ? 'primary.contrastText' : 'text.primary',
+                maxWidth: '70%',
+                borderRadius: '10px',
+              }}
+            >
+              <Typography>{msg.text}</Typography>
+              <Typography
+                variant="caption"
+                sx={{ display: 'block', textAlign: 'right', mt: 1 }}
+              >
+                {msg.time}
+              </Typography>
+            </Paper>
           ))}
           {loading && (
-            <div className="message bot typing">
-              <div className="avatar">🤖</div>
-              <div className="text-content">
-                <p>Typing...</p>
-              </div>
-            </div>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              Bot is typing...
+            </Typography>
           )}
-        </div>
-        <div className="input-area">
-          <input
-            type="text"
+        </Box>
+
+        {/* Input Area */}
+        <Box
+          sx={{
+            display: 'flex',
+            p: 2,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <TextField
+            variant="outlined"
+            fullWidth
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleInputKeyPress}
             placeholder="Type your message..."
+            sx={{ mr: 2 }}
           />
-          <button onClick={sendMessage} disabled={loading}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={sendMessage}
+            disabled={loading}
+            startIcon={<Send />}
+          >
             {loading ? '...' : 'Send'}
-          </button>
-        </div>
-      </div>
-      <style jsx>{`
-        .chat-container {
-          display: flex;
-          flex-direction: column;
-          height: 100vh;
-          background: var(--background-color);
-          color: var(--text-color);
-        }
-        .chat-header {
-          padding: 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          background: var(--header-background);
-        }
-        .toggle-mode {
-          background: var(--button-background);
-          color: var(--button-text);
-          border: none;
-          padding: 10px;
-          border-radius: 5px;
-          cursor: pointer;
-        }
-        .chat-box {
-          flex: 1;
-          padding: 20px;
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-          background: var(--chat-background);
-        }
-        .message {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-        }
-        .message.user {
-          justify-content: flex-end;
-        }
-        .message.bot {
-          justify-content: flex-start;
-        }
-        .avatar {
-          font-size: 24px;
-        }
-        .text-content {
-          max-width: 70%;
-          padding: 10px;
-          background: var(--message-background);
-          border-radius: 10px;
-        }
-        .timestamp {
-          font-size: 10px;
-          margin-top: 5px;
-          color: var(--timestamp-color);
-          text-align: right;
-        }
-        .input-area {
-          display: flex;
-          padding: 10px;
-          background: var(--input-background);
-        }
-        .input-area input {
-          flex: 1;
-          padding: 10px;
-          border: 1px solid var(--input-border);
-          border-radius: 5px;
-        }
-        .input-area button {
-          margin-left: 10px;
-          padding: 10px 20px;
-          background: var(--button-background);
-          color: var(--button-text);
-          border: none;
-          border-radius: 5px;
-        }
-        .dark {
-          --background-color: #121212;
-          --text-color: #ffffff;
-          --header-background: #1e1e1e;
-          --chat-background: #1e1e1e;
-          --message-background: #333333;
-          --timestamp-color: #aaaaaa;
-          --input-background: #1e1e1e;
-          --input-border: #333333;
-          --button-background: #555555;
-          --button-text: #ffffff;
-        }
-        :not(.dark) {
-          --background-color: #f9f9f9;
-          --text-color: #000000;
-          --header-background: #ffffff;
-          --chat-background: #ffffff;
-          --message-background: #f1f1f1;
-          --timestamp-color: #666666;
-          --input-background: #ffffff;
-          --input-border: #cccccc;
-          --button-background: #007bff;
-          --button-text: #ffffff;
-        }
-      `}</style>
-    </div>
+          </Button>
+        </Box>
+      </Box>
+    </ThemeProvider>
   );
 }
