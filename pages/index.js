@@ -26,16 +26,15 @@ export default function Chat() {
     setLoading(true);
 
     try {
-      const response = await fetch(`https://chat.onedevai.workers.dev/?prompt=${encodeURIComponent(input)}`);
+      const response = await fetch(`/api/chat?prompt=${encodeURIComponent(input)}`);
       if (!response.ok) throw new Error(`API returned status: ${response.status}`);
       const data = await response.json();
 
-      // Extract and join all response texts
-      const botResponses = data.map((item) => item.response?.response).join(' ');
+      const botResponse = data?.response || 'No response from the bot.';
 
       setMessages([
         ...newMessages,
-        { sender: 'bot', text: botResponses, time: new Date().toLocaleTimeString() },
+        { sender: 'bot', text: botResponse, time: new Date().toLocaleTimeString() },
       ]);
     } catch (error) {
       console.error('Error fetching response:', error);
