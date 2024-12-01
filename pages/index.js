@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Box, TextField, Button, Typography, AppBar, Toolbar, IconButton, Paper, CircularProgress } from '@mui/material';
+import { Box, TextField, Button, Typography, AppBar, Toolbar, IconButton, Paper, CircularProgress, Grid, useMediaQuery } from '@mui/material';
 import { Send, Brightness4, Brightness7 } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
@@ -9,6 +9,7 @@ export default function Chat() {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const chatBoxRef = useRef(null);
+  const isMobile = useMediaQuery('(max-width:600px)');
 
   const theme = createTheme({
     palette: {
@@ -90,8 +91,15 @@ export default function Chat() {
             flexDirection: 'column',
             gap: 2,
             bgcolor: 'background.paper',
+            paddingBottom: isMobile ? '10px' : '20px',
           }}
         >
+          {messages.length === 0 && !loading && (
+            <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary' }}>
+              Start typing to begin the conversation!
+            </Typography>
+          )}
+
           {messages.map((msg, index) => (
             <Paper
               key={index}
@@ -101,8 +109,10 @@ export default function Chat() {
                 alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
                 bgcolor: msg.sender === 'user' ? 'primary.main' : 'grey.300',
                 color: msg.sender === 'user' ? 'primary.contrastText' : 'text.primary',
-                maxWidth: '70%',
-                borderRadius: msg.sender === 'user' ? '10px 10px 0 10px' : '10px 10px 10px 0',
+                maxWidth: '80%',
+                borderRadius: '12px',
+                transition: 'all 0.3s ease-in-out',
+                boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.2)',
               }}
             >
               <Typography>{msg.text}</Typography>
@@ -111,9 +121,11 @@ export default function Chat() {
               </Typography>
             </Paper>
           ))}
+          
+          {/* Loading State */}
           {loading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-              <CircularProgress size={20} />
+              <CircularProgress size={30} color="primary" />
             </Box>
           )}
         </Box>
@@ -126,6 +138,7 @@ export default function Chat() {
             borderTop: '1px solid',
             borderColor: 'divider',
             bgcolor: 'background.default',
+            gap: 2,
           }}
         >
           <TextField
@@ -135,7 +148,11 @@ export default function Chat() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleInputKeyPress}
             placeholder="Type your message..."
-            sx={{ mr: 2 }}
+            sx={{
+              borderRadius: '20px',
+              padding: '10px 15px',
+              flexGrow: 1,
+            }}
           />
           <Button
             variant="contained"
@@ -143,6 +160,12 @@ export default function Chat() {
             onClick={sendMessage}
             disabled={loading}
             startIcon={<Send />}
+            sx={{
+              borderRadius: '20px',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+            }}
           >
             Send
           </Button>
