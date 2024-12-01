@@ -10,6 +10,10 @@
   },
   "dependencies": {
     "@netlify/plugin-nextjs": "^5.8.1",
+    "@mui/material": "^6.1.9",
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
+    "@mui/icons-material": "^6.1.9",
     "next": "^15.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
