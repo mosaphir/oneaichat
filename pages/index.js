@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const chatBoxRef = useRef(null);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -16,12 +17,14 @@ export default function Chat() {
     setLoading(true);
 
     try {
-      const response = await fetch(`https://chat.onedevai.workers.dev/?prompt=${encodeURIComponent(input)}`);
-      const data = await response.text();
+      const response = await fetch(`/api/chat?prompt=${encodeURIComponent(input)}`);
+      const data = await response.json();
+
+      if (data.error) throw new Error(data.error);
 
       setMessages([
         ...newMessages,
-        { sender: 'bot', text: data, time: new Date().toLocaleTimeString() },
+        { sender: 'bot', text: data.response, time: new Date().toLocaleTimeString() },
       ]);
     } catch (error) {
       setMessages([
@@ -33,16 +36,25 @@ export default function Chat() {
     }
   };
 
+  const handleInputKeyPress = (e) => {
+    if (e.key === 'Enter') sendMessage();
+  };
+
+  // Scroll to the latest message
+  useEffect(() => {
+    chatBoxRef.current?.scrollTo(0, chatBoxRef.current.scrollHeight);
+  }, [messages]);
+
   return (
     <div className={darkMode ? 'dark' : ''}>
-      <div className="container">
-        <header className="header">
+      <div className="chat-container">
+        <header className="chat-header">
           <h1>AI Chatbot</h1>
           <button className="toggle-mode" onClick={() => setDarkMode(!darkMode)}>
             {darkMode ? 'Light Mode' : 'Dark Mode'}
           </button>
         </header>
-        <div className="chat-box">
+        <div className="chat-box" ref={chatBoxRef}>
           {messages.map((msg, index) => (
             <div
               key={index}
@@ -58,7 +70,7 @@ export default function Chat() {
             </div>
           ))}
           {loading && (
-            <div className="message bot">
+            <div className="message bot typing">
               <div className="avatar">🤖</div>
               <div className="text-content">
                 <p>Typing...</p>
@@ -71,27 +83,27 @@ export default function Chat() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleInputKeyPress}
             placeholder="Type your message..."
           />
           <button onClick={sendMessage} disabled={loading}>
-            Send
+            {loading ? '...' : 'Send'}
           </button>
         </div>
       </div>
       <style jsx>{`
-        .container {
+        .chat-container {
           display: flex;
           flex-direction: column;
           height: 100vh;
           background: var(--background-color);
           color: var(--text-color);
-          font-family: Arial, sans-serif;
         }
-        .header {
+        .chat-header {
+          padding: 20px;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 20px;
           background: var(--header-background);
         }
         .toggle-mode {
@@ -99,20 +111,21 @@ export default function Chat() {
           color: var(--button-text);
           border: none;
           padding: 10px;
+          border-radius: 5px;
           cursor: pointer;
         }
         .chat-box {
           flex: 1;
-          overflow-y: auto;
           padding: 20px;
+          overflow-y: auto;
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 15px;
           background: var(--chat-background);
         }
         .message {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           gap: 10px;
         }
         .message.user {
@@ -125,17 +138,16 @@ export default function Chat() {
           font-size: 24px;
         }
         .text-content {
-          background: var(--message-background);
-          color: var(--message-text);
+          max-width: 70%;
           padding: 10px;
+          background: var(--message-background);
           border-radius: 10px;
-          max-width: 60%;
         }
         .timestamp {
           font-size: 10px;
-          text-align: right;
           margin-top: 5px;
           color: var(--timestamp-color);
+          text-align: right;
         }
         .input-area {
           display: flex;
@@ -147,7 +159,6 @@ export default function Chat() {
           padding: 10px;
           border: 1px solid var(--input-border);
           border-radius: 5px;
-          font-size: 16px;
         }
         .input-area button {
           margin-left: 10px;
@@ -156,7 +167,6 @@ export default function Chat() {
           color: var(--button-text);
           border: none;
           border-radius: 5px;
-          cursor: pointer;
         }
         .dark {
           --background-color: #121212;
@@ -164,11 +174,10 @@ export default function Chat() {
           --header-background: #1e1e1e;
           --chat-background: #1e1e1e;
           --message-background: #333333;
-          --message-text: #ffffff;
           --timestamp-color: #aaaaaa;
           --input-background: #1e1e1e;
           --input-border: #333333;
-          --button-background: #333333;
+          --button-background: #555555;
           --button-text: #ffffff;
         }
         :not(.dark) {
@@ -177,7 +186,6 @@ export default function Chat() {
           --header-background: #ffffff;
           --chat-background: #ffffff;
           --message-background: #f1f1f1;
-          --message-text: #000000;
           --timestamp-color: #666666;
           --input-background: #ffffff;
           --input-border: #cccccc;
