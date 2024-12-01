@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Box, TextField, Button, Typography, AppBar, Toolbar, IconButton, Paper } from '@mui/material';
+import { Box, TextField, Button, Typography, AppBar, Toolbar, IconButton, Paper, CircularProgress } from '@mui/material';
 import { Send, Brightness4, Brightness7 } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
@@ -26,20 +26,22 @@ export default function Chat() {
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/chat?prompt=${encodeURIComponent(input)}`);
+      const response = await fetch(`https://chat.onedevai.workers.dev/?prompt=${encodeURIComponent(input)}`);
+      if (!response.ok) throw new Error(`API returned status: ${response.status}`);
       const data = await response.json();
 
-      if (data.error || !Array.isArray(data)) throw new Error(data.error || 'Invalid API response');
+      // Extract and join all response texts
+      const botResponses = data.map((item) => item.response?.response).join(' ');
 
-      const botResponse = data[0]?.response?.response || 'No response received.';
       setMessages([
         ...newMessages,
-        { sender: 'bot', text: botResponse, time: new Date().toLocaleTimeString() },
+        { sender: 'bot', text: botResponses, time: new Date().toLocaleTimeString() },
       ]);
     } catch (error) {
+      console.error('Error fetching response:', error);
       setMessages([
         ...newMessages,
-        { sender: 'bot', text: 'Error: Unable to fetch response.', time: timestamp },
+        { sender: 'bot', text: `Error: Unable to fetch response.`, time: timestamp },
       ]);
     } finally {
       setLoading(false);
@@ -72,10 +74,7 @@ export default function Chat() {
             <Typography variant="h6" sx={{ flexGrow: 1 }}>
               AI Chatbot
             </Typography>
-            <IconButton
-              color="inherit"
-              onClick={() => setDarkMode(!darkMode)}
-            >
+            <IconButton color="inherit" onClick={() => setDarkMode(!darkMode)}>
               {darkMode ? <Brightness7 /> : <Brightness4 />}
             </IconButton>
           </Toolbar>
@@ -91,6 +90,7 @@ export default function Chat() {
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
+            bgcolor: 'background.paper',
           }}
         >
           {messages.map((msg, index) => (
@@ -100,25 +100,22 @@ export default function Chat() {
               sx={{
                 p: 2,
                 alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                bgcolor: msg.sender === 'user' ? 'primary.main' : 'grey.200',
+                bgcolor: msg.sender === 'user' ? 'primary.main' : 'grey.300',
                 color: msg.sender === 'user' ? 'primary.contrastText' : 'text.primary',
                 maxWidth: '70%',
-                borderRadius: '10px',
+                borderRadius: msg.sender === 'user' ? '10px 10px 0 10px' : '10px 10px 10px 0',
               }}
             >
               <Typography>{msg.text}</Typography>
-              <Typography
-                variant="caption"
-                sx={{ display: 'block', textAlign: 'right', mt: 1 }}
-              >
+              <Typography variant="caption" sx={{ display: 'block', textAlign: 'right', mt: 1 }}>
                 {msg.time}
               </Typography>
             </Paper>
           ))}
           {loading && (
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              Bot is typing...
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+              <CircularProgress size={20} />
+            </Box>
           )}
         </Box>
 
@@ -129,6 +126,7 @@ export default function Chat() {
             p: 2,
             borderTop: '1px solid',
             borderColor: 'divider',
+            bgcolor: 'background.default',
           }}
         >
           <TextField
@@ -147,7 +145,7 @@ export default function Chat() {
             disabled={loading}
             startIcon={<Send />}
           >
-            {loading ? '...' : 'Send'}
+            Send
           </Button>
         </Box>
       </Box>
