@@ -20,11 +20,12 @@ export default function Chat() {
       const response = await fetch(`/api/chat?prompt=${encodeURIComponent(input)}`);
       const data = await response.json();
 
-      if (data.error) throw new Error(data.error);
+      if (data.error || !Array.isArray(data)) throw new Error(data.error || 'Invalid API response');
 
+      const botResponse = data[0]?.response?.response || 'No response received.';
       setMessages([
         ...newMessages,
-        { sender: 'bot', text: data.response, time: new Date().toLocaleTimeString() },
+        { sender: 'bot', text: botResponse, time: new Date().toLocaleTimeString() },
       ]);
     } catch (error) {
       setMessages([
